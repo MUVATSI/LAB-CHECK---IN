@@ -15,7 +15,6 @@ public class MainClass {
      */
     public static void main(String[] args) {
         Accueil acc = new Accueil();
-        System.out.println("Hello");
         acc.show();
     }
     

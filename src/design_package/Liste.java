@@ -63,7 +63,8 @@ public class Liste extends javax.swing.JFrame {
                     p.getUser().getNomComplet(),
                     p.getUser().getDepartement(),
                     p.getMotif(),
-                    sdf.format(p.getDateHeureIn()) // Heure d'entrée formatée
+                    sdf.format(p.getDateHeureIn()), // Heure d'entrée formatée
+                    //sdf.format(p.getDateHeureOut())
                 };
                 model.addRow(ligne);
             }
@@ -85,6 +86,7 @@ public class Liste extends javax.swing.JFrame {
         tableJ = new javax.swing.JTable();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        printBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("PROJET DU COURS DE POO2 2026 - 2027");
@@ -99,24 +101,42 @@ public class Liste extends javax.swing.JFrame {
 
         tableJ.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Matricule", "Nom & Prénom", "Département", "Motif", "Heure IN"
+                "Matricule", "Nom & Prénom", "Département", "Motif", "Heure Entree", "Heure Sortie"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
+                false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
+        tableJ.setRowHeight(25);
+        // Aligne les en-têtes du tableau à gauche dans NetBeans
+        ((javax.swing.table.DefaultTableCellRenderer) tableJ.getTableHeader().getDefaultRenderer())
+        .setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jScrollPane1.setViewportView(tableJ);
+        if (tableJ.getColumnModel().getColumnCount() > 0) {
+            tableJ.getColumnModel().getColumn(0).setResizable(false);
+            tableJ.getColumnModel().getColumn(0).setPreferredWidth(90);
+            tableJ.getColumnModel().getColumn(1).setResizable(false);
+            tableJ.getColumnModel().getColumn(1).setPreferredWidth(250);
+            tableJ.getColumnModel().getColumn(2).setResizable(false);
+            tableJ.getColumnModel().getColumn(2).setPreferredWidth(90);
+            tableJ.getColumnModel().getColumn(3).setResizable(false);
+            tableJ.getColumnModel().getColumn(3).setPreferredWidth(120);
+            tableJ.getColumnModel().getColumn(4).setResizable(false);
+            tableJ.getColumnModel().getColumn(4).setPreferredWidth(115);
+            tableJ.getColumnModel().getColumn(5).setResizable(false);
+            tableJ.getColumnModel().getColumn(5).setPreferredWidth(115);
+        }
 
         jPanel1.setBackground(new java.awt.Color(204, 204, 255));
 
@@ -139,6 +159,13 @@ public class Liste extends javax.swing.JFrame {
                 .addComponent(jLabel1))
         );
 
+        printBtn.setText("Imprimer / Export PDF");
+        printBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                printBtnActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -150,7 +177,8 @@ public class Liste extends javax.swing.JFrame {
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jButton1)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(printBtn)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -160,7 +188,9 @@ public class Liste extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 385, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(printBtn))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
@@ -171,6 +201,159 @@ public class Liste extends javax.swing.JFrame {
         // TODO add your handling code here:
         this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    
+    private void chargerDonneesImpression() {
+        if (laborActif == null) return;
+        try {
+            PresenceDAO presenceDAO = new PresenceDAO();
+            List<Presence> listeImpression = presenceDAO.getPresencesAImprimer(laborActif.getIdLabo());
+
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) tableJ.getModel();
+            if (model.getColumnCount() < 6) {
+            model.addColumn("Heure OUT");
+            }
+            model.setRowCount(0);
+
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM HH:mm");
+
+            for (Presence p : listeImpression) {
+                String heureOutStr = (p.getDateHeureOut() != null) ? sdf.format(p.getDateHeureOut()) : "Non pointé";
+
+                Object[] ligne = new Object[]{
+                    p.getUser().getMatricule(),
+                    p.getUser().getNomComplet(),
+                    p.getUser().getDepartement(),
+                    p.getMotif(),
+                    sdf.format(p.getDateHeureIn()),
+                    heureOutStr
+                };
+                model.addRow(ligne);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
+    private void printBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_printBtnActionPerformed
+        // TODO add your handling code here:
+        try {
+            // 1. Recharger les données de l'impression (Aujourd'hui + Sorties non pointées)
+            chargerDonneesImpression();
+
+            // 2. Préparation des variables d'en-tête
+            java.text.SimpleDateFormat sdfDate = new java.text.SimpleDateFormat("dd/MM/yyyy 'à' HH:mm");
+            String dateStr = sdfDate.format(new java.util.Date());
+            String nomLabo = (laborActif != null) ? laborActif.getNomLabo().toUpperCase() : "LABORATOIRE";
+
+            // 3. Style et PADDING des cellules du tableau
+            java.awt.Font fontOriginal = tableJ.getFont();
+            java.awt.Font fontHeaderOriginal = tableJ.getTableHeader().getFont();
+            int rowHeightOriginal = tableJ.getRowHeight();
+
+            tableJ.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+            tableJ.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+            tableJ.setRowHeight(30);
+
+            // Padding interne dans les cellules pour décoller le texte des bordures
+            javax.swing.table.DefaultTableCellRenderer paddingRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+                @Override
+                public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value, 
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                    setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 0, 8));
+                    return this;
+                }
+            };
+
+            for (int i = 0; i < tableJ.getColumnCount(); i++) {
+                tableJ.getColumnModel().getColumn(i).setCellRenderer(paddingRenderer);
+            }
+
+            // 4. Obtention du Printable natif de la JTable
+            java.awt.print.Printable tablePrintable = tableJ.getPrintable(
+                javax.swing.JTable.PrintMode.FIT_WIDTH, 
+                null, 
+                new java.text.MessageFormat("Page {0,number,integer}")
+            );
+
+            // 5. Création du Job d'impression avec MARGES DE 5%
+            java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+
+            job.setPrintable((g, pageFormat, pageIndex) -> {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+
+                // Anti-aliasing pour un rendu ultra net
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+                // Largeur et Hauteur imprimables de la page A4
+                double pageX = pageFormat.getImageableX();
+                double pageY = pageFormat.getImageableY();
+                double totalWidth = pageFormat.getImageableWidth();
+
+                // --- CALCUL DES MARGES DE 5% ---
+                int margin5Percent = (int) (totalWidth * 0.02); // 2% d'espace à gauche et 2% à droite
+                int contentWidth = (int) (totalWidth - (2 * margin5Percent)); // 96% de largeur utile
+                int startX = (int) (pageX + margin5Percent);
+                int startY = (int) pageY;
+
+                // --- A. BANDEAU VERT UCBC (#00A859) DANS LA ZONE DE 90% ---
+                java.awt.Color vertUCBC = new java.awt.Color(0, 168, 89);
+                g2.setColor(vertUCBC);
+                g2.fillRoundRect(startX, startY, contentWidth, 55, 16, 16);
+                g2.fillRect(startX, startY, contentWidth, 25);
+
+                // Titre & Sous-titre dans le bandeau
+                g2.setColor(java.awt.Color.WHITE);
+                g2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 15));
+                g2.drawString("RAPPORT DE PRÉSENCE - " + nomLabo, startX + 15, startY + 25);
+
+                g2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 10));
+                g2.setColor(new java.awt.Color(245, 245, 245));
+                g2.drawString("Document généré le : " + dateStr, startX + 15, startY + 43);
+
+                // --- B. POSITIONNEMENT ET ÉCHELLE DE LA TABLE (MARGES GAUCHE/DROITE DE 5%) ---
+                // 1. Déplacer vers le point de départ de la marge de 5% et sous le bandeau
+                g2.translate(startX, startY + 75);
+
+                // 2. Redimensionner la table Swing pour qu'elle occupe exactement 90% de la largeur
+                double scaleRatio = (double) contentWidth / totalWidth;
+                g2.scale(scaleRatio, scaleRatio);
+
+                // Imprimer la JTable mise à l'échelle
+                return tablePrintable.print(g2, pageFormat, pageIndex);
+            });
+
+            // 6. Lancement de la boîte de dialogue PDF
+            if (job.printDialog()) {
+                job.print();
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Exportation PDF effectuée avec succès !", 
+                    "Impression", 
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            // 7. Restauration de l'affichage initial
+            tableJ.setFont(fontOriginal);
+            tableJ.getTableHeader().setFont(fontHeaderOriginal);
+            tableJ.setRowHeight(rowHeightOriginal);
+
+            javax.swing.table.DefaultTableCellRenderer defaultRenderer = new javax.swing.table.DefaultTableCellRenderer();
+            for (int i = 0; i < tableJ.getColumnCount(); i++) {
+                tableJ.getColumnModel().getColumn(i).setCellRenderer(defaultRenderer);
+            }
+
+            chargerListePresents(); 
+
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Erreur lors de l'impression : " + e.getMessage(), 
+                "Erreur", 
+                javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_printBtnActionPerformed
 
     /**
      * @param args the command line arguments
@@ -212,6 +395,7 @@ public class Liste extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton printBtn;
     private javax.swing.JTable tableJ;
     // End of variables declaration//GEN-END:variables
 }
